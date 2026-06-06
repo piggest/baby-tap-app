@@ -1,63 +1,58 @@
 # baby-tap-app
 
-赤ちゃんが画面やキーボードを叩くと、絵文字・パーティクル・効果音で反応する Electron 製の kiosk アプリ。
+赤ちゃんがトラックパッド・キーボード・マウスを叩くと、絵文字・パーティクル・効果音で反応する macOS ネイティブ kiosk アプリ。
+
+v2.0 から Electron 版から **Swift + SpriteKit ネイティブ実装** に置き換え。
 
 ## 特徴
 
 - フルスクリーン kiosk モード
-- 画面タップ / クリック / マウスドラッグ / キー入力に反応
-- 絵文字パーティクル、文字・図形、波紋、横切るキャラクターなど複数の演出
-- Web Audio によるプロシージャル効果音
-- 終了経路を絞った安全設計
-- 音量・輝度・メディアキーを **CGEventTap でブロック**（macOS 専用ネイティブアドオン）
+- **MultitouchSupport.framework で生トラックパッドデータを取得** (3本指以上でも全指反応)
+- マウスは移動・ボタンクリック・ドラッグすべてで反応
+- 任意のキー入力で反応 (Cmd/Ctrl/Opt 修飾なし)
+- 絵文字、文字 (ひらがな/英字/数字)、図形パーティクル、波紋＋キラキラ、横切るキャラクター
+- AVAudioEngine によるプロシージャル効果音
+- **CGEventTap でメディアキー (音量/輝度/再生制御) をブロック**
 
 ## 必要環境
 
-- macOS（メディアキーブロックは macOS 専用）
-- Node.js 18+
-- Xcode Command Line Tools（ネイティブモジュールのビルドに必要）
+- macOS 12.0+ (Apple Silicon)
+- Xcode Command Line Tools
 
-## セットアップ
-
-```bash
-npm install
-```
-
-`postinstall` で Electron に合わせてネイティブモジュール（`media_key_blocker.node`）が自動ビルドされる。
-
-## 起動
+## ビルド・起動
 
 ```bash
-npm start
+./scripts/build-app.sh
+open release/BabyTap.app
 ```
 
-## バイナリからの起動（リリース DMG）
+`scripts/build-app.sh` が swift build → .app バンドル生成 → ad-hoc 署名まで実行する。
 
-リリース DMG (`BabyTap-x.y.z-arm64.dmg`) はコード署名されていません。初回起動時に Gatekeeper の警告が出ます。
+開発中の直接起動：
 
-1. `.app` を Finder で右クリック → 「開く」
-2. 警告ダイアログで「開く」を選択
+```bash
+swift run -c release
+```
 
-以降は通常通り起動できます。
+ただし `.app` 化していないと kiosk 動作 (フルスクリーン等) が不完全。
 
 ## 終了方法
 
 | キー | 動作 |
 |---|---|
 | `Cmd + Q` | 通常終了 |
-| `Cmd + Shift + Q` | 強制終了（バイパスキー） |
-| 画面ダブルクリック | 終了メニューを表示 |
+| `Cmd + Shift + Q` | 強制終了 (バイパスキー) |
 
 ## アクセシビリティ権限
 
-メディアキー（音量・輝度・再生制御など）をブロックするには **アクセシビリティ権限** が必要です。
-初回起動時に macOS のプロンプトが表示されたら許可してください。
+メディアキー (音量/輝度/再生制御) をブロックするには **アクセシビリティ権限** が必要。
+初回起動時に macOS のプロンプトが出たら許可してください。
 
 ```
 システム設定 → プライバシーとセキュリティ → アクセシビリティ
 ```
 
-ここで Electron（または本アプリ）にチェックを入れてからアプリを再起動してください。
+ここで BabyTap にチェックを入れてからアプリを再起動。
 
 ## ブロックされるキー
 
@@ -71,13 +66,24 @@ npm start
 
 | ファイル | 役割 |
 |---|---|
-| `main.js` | Electron メインプロセス、ウィンドウ生成、終了制御 |
-| `preload.js` | コンテキストブリッジで安全な API を公開 |
-| `renderer.js` | タップ反応・効果音・アニメーション |
-| `styles.css` | レイアウト・アニメーション定義 |
-| `index.html` | エントリ HTML |
-| `native/media_key_blocker.mm` | CGEventTap によるメディアキーブロック |
-| `binding.gyp` | ネイティブアドオンのビルド定義 |
+| `Sources/BabyTap/main.swift` | アプリ起動エントリ |
+| `Sources/BabyTap/AppDelegate.swift` | ウィンドウ/メニュー/各サブシステム統括 |
+| `Sources/BabyTap/BabyTapView.swift` | マウス・キー・タッチ入力受付 NSView |
+| `Sources/BabyTap/BabyTapScene.swift` | SpriteKit シーン、演出 |
+| `Sources/BabyTap/SoundEngine.swift` | AVAudioEngine プロシージャル効果音 |
+| `Sources/BabyTap/MediaKeyBlocker.swift` | CGEventTap でメディアキー破棄 |
+| `Sources/BabyTap/TrackpadMonitor.swift` | MultitouchSupport.framework 経由で生指データ取得 |
+| `Resources/Info.plist` | アプリのメタデータ |
+| `scripts/build-app.sh` | .app バンドル生成 |
+
+## バイナリからの起動 (リリース DMG)
+
+リリース DMG (`BabyTap-x.y.z-arm64.dmg`) はコード署名されていません。初回起動時に Gatekeeper の警告が出ます。
+
+1. `.app` を Finder で右クリック → 「開く」
+2. 警告ダイアログで「開く」を選択
+
+以降は通常通り起動できます。
 
 ## ライセンス
 

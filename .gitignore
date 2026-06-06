@@ -1,11 +1,8 @@
-node_modules/
-build/
-dist/
-out/
+.build/
+.swiftpm/
 release/
-bin/
+DerivedData/
 .DS_Store
 *.log
-npm-debug.log*
 .vscode/
 .idea/
