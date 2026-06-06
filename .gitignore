@@ -3,6 +3,7 @@ build/
 dist/
 out/
 release/
+bin/
 .DS_Store
 *.log
 npm-debug.log*
