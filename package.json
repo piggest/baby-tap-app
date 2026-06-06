@@ -1,0 +1,52 @@
+{
+  "name": "baby-tap-app",
+  "version": "1.0.0",
+  "description": "赤ちゃんが画面を叩くと反応するアプリ",
+  "main": "main.js",
+  "scripts": {
+    "start": "electron .",
+    "build:native": "electron-rebuild",
+    "postinstall": "electron-rebuild",
+    "pack:app": "electron-builder --mac --dir --arm64",
+    "pack:dmg": "electron-builder --mac dmg --arm64 --prepackaged release/mac-arm64/BabyTap.app"
+  },
+  "dependencies": {
+    "node-addon-api": "^8.2.1"
+  },
+  "devDependencies": {
+    "electron": "^33.0.0",
+    "electron-builder": "^25.1.8",
+    "@electron/rebuild": "^3.7.0"
+  },
+  "build": {
+    "appId": "com.piggest.baby-tap-app",
+    "productName": "BabyTap",
+    "asar": true,
+    "asarUnpack": [
+      "build/Release/*.node"
+    ],
+    "files": [
+      "main.js",
+      "preload.js",
+      "renderer.js",
+      "index.html",
+      "styles.css",
+      "native/**",
+      "build/Release/*.node",
+      "package.json"
+    ],
+    "directories": {
+      "output": "release"
+    },
+    "mac": {
+      "category": "public.app-category.entertainment",
+      "target": [
+        { "target": "dir", "arch": ["arm64"] }
+      ],
+      "identity": null,
+      "extendInfo": {
+        "NSAccessibilityUsageDescription": "音量・輝度・メディアキーをブロックするためアクセシビリティ権限が必要です。"
+      }
+    }
+  }
+}
